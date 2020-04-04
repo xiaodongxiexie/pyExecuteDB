@@ -42,7 +42,7 @@ class Query(object):
         使用上面的build_query 即可，
         不过，如果伪造的主键在实际表中并不起到主键作用时，查询结果为多个时会异常返回为单个！
         :param table_name:
-        :param primary_keys:
+        :param primary_keys: 可迭代即可，当伪主键一个时，也需要放到列表中
         :param schema:
         :return:
         """
@@ -63,6 +63,12 @@ class {table_name}(Base):
         return r
 
     def _build_crud(self, table_name: str, schema: str = None):
+        """
+        当查询的表有定义主键时，可以用这个~
+        :param table_name:
+        :param schema:
+        :return:
+        """
         Base = declarative_base(self.engine)
 
         table = type(table_name,
