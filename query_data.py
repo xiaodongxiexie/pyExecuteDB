@@ -105,6 +105,7 @@ if __name__ == '__main__':
     with Query(sqlite_url) as q:
         session = q.session
         table = q.build_crud("links", ["movieId", "imdbId"])
+        table2 = q.build_query("links")
 
         # 由于将movieId， imdbId 设置为伪主键，因此，如表中有此两个值相同的，将只查出一个来。。。
         print(session.query(table).filter(table.movieId == 1).all())
@@ -118,5 +119,9 @@ if __name__ == '__main__':
         session.commit()
         # 虽然查表成功，但是查表时会发现数目不对，就是因为被视为主键组的缘故。。坑
         print(session.query(table).filter(table.movieId == 1).all())
+
+        # 因此，建议只是查数据时，用build_query 方式~
+        print(session.query(table2).filter(table2.c.movieId == 1).all())
+
 
 
