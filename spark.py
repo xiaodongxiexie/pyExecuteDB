@@ -33,8 +33,8 @@ def sqlite():
 
     # 以下两种方式，由于当存在相同列名时不好取列，因此需要特殊处理下
     r = links_frame.join(movies_frame, links_frame.movieId == movies_frame.movieId)
-    r = links_frame.join(movies_frame, on="movieId").select(links_frame.moviesId.alias("a_movieId"),
-                                                            movies_frame.moviesId.alias("b_movieId"),
+    r = links_frame.join(movies_frame, on="movieId").select(links_frame.movieId.alias("a_movieId"),
+                                                            movies_frame.movieId.alias("b_movieId"),
                                                             "imdbId",
                                                             "tmdbId",
                                                             "title",
@@ -44,11 +44,11 @@ def sqlite():
     # 对genres列做统计, 统计各genre元素出现个数
     target = (
         r.select("genres")
-            .rdd
-            .map(lambda obj: obj.genres.split("|"))
-            .flatMap(lambda obj: obj)
-            .map(lambda obj: (obj, 1))
-            .reduceByKey(lambda x, y: x + y)
+         .rdd
+         .map(lambda obj: obj.genres.split("|"))
+         .flatMap(lambda obj: obj)
+         .map(lambda obj: (obj, 1))
+         .reduceByKey(lambda x, y: x + y)
     )
     print(target.collectAsMap())
     r = target.toDF(["genre", "num"])
@@ -79,7 +79,37 @@ def mysql():
     movies_frame = spark.read.jdbc(url,
                                    "(select * from movies)b",
                                    properties=properties)
-    return links_frame, movies_frame
+    r = links_frame.join(movies_frame, links_frame.movieId == movies_frame.movieId)
+    r = links_frame.join(movies_frame, on="movieId").select("imdbId",
+                                                            "tmdbId",
+                                                            "title",
+                                                            "genres")
+    r.show()
+    # 对genres列做统计, 统计各genre元素出现个数
+    target = (
+        r.select("genres")
+         .rdd
+         .map(lambda obj: obj[0].split("|"))
+         .flatMap(lambda obj: obj)
+         .map(lambda obj: (obj, 1))
+         .reduceByKey(lambda x, y: x + y)
+    )
+
+    r = target.toDF(["genre", "num"])
+
+    options = properties.copy()
+    options.update({
+        "dbtable": "genres",
+        "url": url,
+    })
+    (
+        r.write
+         .format("jdbc")
+         .options(**options)
+         .mode("overwrite")
+         .save()
+    )
+    spark.stop()
 
 
 def greenplum():
@@ -96,4 +126,4 @@ def redis():
 
 if __name__ == '__main__':
 
-    links_frame, movies_frame = mysql()
+    mysql()
