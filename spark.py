@@ -101,12 +101,13 @@ def mysql():
     options.update({
         "dbtable": "genres",
         "url": url,
+        # "password": "your-password",
     })
     (
         r.write
          .format("jdbc")
          .options(**options)
-         .mode("overwrite")
+         .mode("overwrite")  # 建议预先设计好表结构，然后用 "append" 模式
          .save()
     )
     spark.stop()
