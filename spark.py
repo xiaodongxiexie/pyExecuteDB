@@ -68,18 +68,27 @@ def sqlite():
 def mysql():
     spark = SparkSession.builder.appName("mysql").getOrCreate()
 
+    # 建议使用rewriteBatchedStatements = True 模式，支持批量插入
+    # 建议使用serverTimezone=Asia/Shanghai，不然你如果用到sql中的datetime等类型时间可能会对不上
     url = "jdbc:mysql://localhost:3306/movies?rewriteBatchedStatements=true&serverTimezone=Asia/Shanghai"
+
+    # jar包 mysql-connector-java-8.0.13.jar
+    # 如果使用jar包为5.xx版本，则driver 为 com.mysql.jdbc.Driver
     properties = {"driver": "com.mysql.cj.jdbc.Driver",
                   "user": "root",
                   }
 
+
     links_frame = spark.read.jdbc(url,
-                                  "(select * from links)a",
+                                  "links",  # 注意和下面的两种写法
                                   properties=properties)
     movies_frame = spark.read.jdbc(url,
                                    "(select * from movies)b",
                                    properties=properties)
     r = links_frame.join(movies_frame, links_frame.movieId == movies_frame.movieId)
+
+    # 两个表有列同名时后期处理比较繁琐，
+    # 可以通过 .withColumnRenamed 将同名列重命名，方便后期使用~
     r = links_frame.join(movies_frame, on="movieId").select("imdbId",
                                                             "tmdbId",
                                                             "title",
