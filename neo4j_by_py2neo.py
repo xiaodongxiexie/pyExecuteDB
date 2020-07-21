@@ -48,6 +48,7 @@ if __name__ == '__main__':
     tx.commit()
 
     tx = g.begin()
+    has_seen = set()
     for movie, detail in records.items():
         movie_nodes = matcher.match(**{"label": movie})
         for movie_node in movie_nodes:
@@ -56,11 +57,19 @@ if __name__ == '__main__':
                     continue
                 if isinstance(v, list):
                     for _v in v:
+                        if (movie, mapping.get(k, k), _v) in has_seen:
+                            continue
+                        else:
+                            has_seen.add((movie, mapping.get(k, k), _v))
                         nodes = matcher.match(**{"label": _v})
                         for node in nodes:
                             relation = Relationship(movie_node, mapping.get(k, k), node)
                             tx.create(relation)
                 else:
+                    if (movie, mapping.get(k, k), v) in has_seen:
+                        continue
+                    else:
+                        has_seen.add((movie, mapping.get(k, k), v))
                     nodes = matcher.match(**{"label": v})
                     for node in nodes:
                         relation = Relationship(movie_node, mapping.get(k, k), node)
