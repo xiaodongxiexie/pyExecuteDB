@@ -10,19 +10,15 @@ from py2neo import Graph, Node, Relationship
 g = Graph("bolt://localhost:7687", password="neo")
 matcher = NodeMatcher(g)
 
+def load_json(path):
+    with open(path, encoding="utf-8") as file:
+        data = json.load(file)
+    return data
+
 
 if __name__ == '__main__':
 
-    def load_json(path):
-        with open(path, encoding="utf-8") as file:
-            data = json.load(file)
-        return data
-
     records = load_json("data/dataset/movies.json")
-
-    movies = set()
-    actors = set()
-
 
     history = {}
     mapping = {
@@ -41,14 +37,17 @@ if __name__ == '__main__':
                     history.setdefault(k, set()).add(v)
 
     tx = g.begin()
+    has_seen = set()
     for label, aset in history.items():
         for element in aset:
+            if element in has_seen:
+                continue
+            has_seen.add(element)
             node = Node(label, **{"label": element})
             tx.create(node)
     tx.commit()
 
     tx = g.begin()
-    has_seen = set()
     for movie, detail in records.items():
         movie_nodes = matcher.match(**{"label": movie})
         for movie_node in movie_nodes:
@@ -57,19 +56,11 @@ if __name__ == '__main__':
                     continue
                 if isinstance(v, list):
                     for _v in v:
-                        if (movie, mapping.get(k, k), _v) in has_seen:
-                            continue
-                        else:
-                            has_seen.add((movie, mapping.get(k, k), _v))
                         nodes = matcher.match(**{"label": _v})
                         for node in nodes:
                             relation = Relationship(movie_node, mapping.get(k, k), node)
                             tx.create(relation)
                 else:
-                    if (movie, mapping.get(k, k), v) in has_seen:
-                        continue
-                    else:
-                        has_seen.add((movie, mapping.get(k, k), v))
                     nodes = matcher.match(**{"label": v})
                     for node in nodes:
                         relation = Relationship(movie_node, mapping.get(k, k), node)
