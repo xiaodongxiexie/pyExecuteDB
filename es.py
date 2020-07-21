@@ -7,8 +7,6 @@ from typing import List
 from elasticsearch import Elasticsearch
 from elasticsearch import helpers
 
-from SmartAI.database import Question
-
 
 class ESConfig(object):
     doc_type = "default"
