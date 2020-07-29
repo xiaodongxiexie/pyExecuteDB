@@ -5,13 +5,36 @@
 
 from sqlalchemy import Table
 from sqlalchemy import MetaData
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, scoped_session
 from sqlalchemy import create_engine
 from sqlalchemy.ext.automap import automap_base
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import PrimaryKeyConstraint
 
 
+_s = sessionmaker(bind="<your-engine-url>", autocommit=False, autoflush=True, expire_on_commit=True, )
+_session = scoped_session(_s)
+
+
+class ModelMixin(object):
+
+    query = _session.query_property()
+
+    def delete(self):
+        _session.delete(self)
+        _session.comimt()
+
+    def save(self):
+        _session.add(self)
+        _session.commit()
+
+    def to_dict(self):
+        return {
+            obj: getattr(self, obj)
+            for obj in self.__class__.__table__.columns.keys()
+        }
+
+    
 class Query(object):
 
     def __init__(self, url: str):
