@@ -34,7 +34,7 @@ def i2query(self, query, batches=100):
 
 
 def __str__(self):
-    return "<Record {}>".format(dict(zip(self._keys, self._values)))
+    return "<Record {}>".format(self.as_dict())
 
 
 Connection.iquery = iquery
