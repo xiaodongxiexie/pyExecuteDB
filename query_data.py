@@ -15,6 +15,23 @@ from sqlalchemy import PrimaryKeyConstraint
 _s = sessionmaker(bind="<your-engine-url>", autocommit=False, autoflush=True, expire_on_commit=True, )
 _session = scoped_session(_s)
 
+"""
+from pprint import pprint
+
+from sqlalchemy import create_engine
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import scoped_session, sessionmaker
+
+Base     = declarative_base()
+metadata = Base.metadata
+engine   = create_engine("<your-engine-url>")
+session  = scoped_session(sessionmaker(engine, autocommit=False, autoflush=True))
+
+Base.query = session.query_property()
+Base.to_dict = lambda self: {obj: getattr(self, obj) for obj in self.__class__.__table__.columns.keys()}
+Base.show = lambda self: pprint(self.to_dict())
+"""
+
 
 class ModelMixin(object):
 
