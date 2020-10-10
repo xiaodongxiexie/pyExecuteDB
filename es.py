@@ -49,7 +49,6 @@ class ESCore(ESConfig, ESMinxin):
         helpers.bulk(self.es, actions)
         return True
 
-
     def search(self, keyword, size=5):
         dsl = {
             "query": {
@@ -65,7 +64,18 @@ class ESCore(ESConfig, ESMinxin):
         )
         hits = [obj["_source"] for obj in rets.get("hits", {}).get("hits", [])]
         return hits
-
+    
+    def fetch(self, es: Elasticsearch = None, index: str = None, doc_type: str = None):
+        if index is None:
+            index = self.index
+        if doc_type is None:
+            doc_type = self.doc_type
+        if es is None:
+            es = self.es
+        objs = helpers.scan(client=es, query={"query": {"match_all": {}}}, index=index, doc_type=doc_type)
+        rets = [obj["_source"] for obj in objs]
+        return rets
+    
     def execute_delete(self, query):
         self.es.delete_by_query(
                 index=self.index,
@@ -73,7 +83,6 @@ class ESCore(ESConfig, ESMinxin):
                 doc_type=self.doc_type,
         )
         return True
-
 
     def clear(self):
         return self.execute_delete({"match_all": {}})
